@@ -1,0 +1,28 @@
+[project]
+name = "deepagents-workspace"
+version = "0.1.0"
+description = "Monorepo for DeepAgents"
+requires-python = ">=3.11"
+dependencies = [
+    "deepagents",
+    "deepagents-cli",
+    "deepagents-web",
+    "deepagents-acp",
+    "deepagents-harbor",
+]
+
+[tool.uv.workspace]
+members = [
+    "libs/acp",
+    "libs/deepagents",
+    "libs/deepagents-cli",
+    "libs/deepagents-web",
+    "libs/harbor",
+]
+
+[tool.uv.sources]
+deepagents = { workspace = true }
+deepagents-cli = { workspace = true }
+deepagents-web = { workspace = true }
+deepagents-acp = { workspace = true }
+deepagents-harbor = { workspace = true }

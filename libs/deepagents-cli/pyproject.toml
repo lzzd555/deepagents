@@ -130,4 +130,4 @@ disallow_any_generics = false
 warn_return_any = false
 
 [tool.uv.sources]
-deepagents = { path = "../deepagents" }
+deepagents = { workspace = true }
