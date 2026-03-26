@@ -103,7 +103,7 @@ class AgentService:
 
         # Configurator will automatically pick up CONTEXT.md and AGENTS.md
         # since it uses settings.get_project_agent_md_paths()
-        from deepagents_cli.config import get_checkpointer
+        from deepagents_cli.sessions import get_checkpointer
         async with get_checkpointer() as checkpointer:
             agent, _backend = await create_cli_agent(
                 model=model,

@@ -445,8 +445,9 @@ class DeepAgentsApp(App):
         # This allows model hot-switching and environment alignment
         try:
             from deepagents_cli.agent import create_cli_agent
-            from deepagents_cli.config import create_model, get_checkpointer, settings
+            from deepagents_cli.config import create_model, settings
             from deepagents_cli.integrations.cua import load_cua_config
+            from deepagents_cli.sessions import get_checkpointer
             from deepagents_cli.tools import fetch_url, http_request, web_search
 
             model = create_model()  # Picks up any model changes
