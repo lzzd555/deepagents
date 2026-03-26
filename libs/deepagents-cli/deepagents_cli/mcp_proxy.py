@@ -46,7 +46,7 @@ class MCPClientProxy:
                 {
                     "playwright": {
                         "command": "npx",
-                        "args": ["@playwright/mcp@latest"],
+                        "args": ["-y", "@playwright/mcp@0.0.68"],
                         "transport": "stdio",
                     }
                 }

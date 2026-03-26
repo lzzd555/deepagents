@@ -192,9 +192,9 @@ class AgentService:
                         async for msg in self._handle_messages(data, tool_call_buffers):
                             yield msg
 
-        except (ValueError, KeyError, RuntimeError) as e:
+        except Exception as e:
             logger.exception("Stream error")
-            yield WebSocketMessage(type="error", data=str(e))
+            yield WebSocketMessage(type="error", data=f"Stream error: {e}")
 
     async def _handle_updates(
         self,
