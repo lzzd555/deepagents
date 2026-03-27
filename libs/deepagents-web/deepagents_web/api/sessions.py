@@ -39,5 +39,5 @@ async def create_session() -> SessionResponse:
 async def delete_session(session_id: str) -> None:
     """Delete an agent session."""
     service = get_agent_service()
-    if not service.delete_session(session_id):
+    if not await service.delete_session(session_id):
         raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")

@@ -6,6 +6,7 @@ class ChatManager {
     constructor() {
         this.ws = null;
         this.sessionId = null;
+        this.isShuttingDown = false;
         this.messagesEl = document.getElementById('messages');
         this.todoListEl = document.getElementById('todo-list');
         this.inputEl = document.getElementById('user-input');
@@ -45,6 +46,13 @@ class ChatManager {
         document.getElementById('reject-btn').addEventListener('click', () => {
             this.handleInterruptDecision('reject');
         });
+
+        window.addEventListener('pagehide', () => {
+            this.shutdownSession();
+        });
+        window.addEventListener('beforeunload', () => {
+            this.shutdownSession();
+        });
     }
 
     connect() {
@@ -66,6 +74,9 @@ class ChatManager {
         this.ws.onclose = () => {
             console.log('WebSocket disconnected');
             this.sendBtn.disabled = true;
+            if (this.isShuttingDown) {
+                return;
+            }
             // Reconnect after delay
             setTimeout(() => this.connect(), 3000);
         };
@@ -134,6 +145,24 @@ class ChatManager {
         }));
 
         this.updateProgress('Stopping...');
+    }
+
+    shutdownSession() {
+        if (this.isShuttingDown) return;
+        this.isShuttingDown = true;
+
+        if (this.sessionId) {
+            fetch(`/api/sessions/${this.sessionId}`, {
+                method: 'DELETE',
+                keepalive: true
+            }).catch((error) => {
+                console.debug('Failed to close session cleanly:', error);
+            });
+        }
+
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.close();
+        }
     }
 
     setProcessing(processing) {
