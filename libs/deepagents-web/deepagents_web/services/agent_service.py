@@ -8,9 +8,8 @@ import uuid
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
-from deepagents_cli.agent import create_cli_agent
 from deepagents_cli.config import SessionState, create_model
-from deepagents_cli.integrations.cua import CuaConfig, load_cua_config
+from deepagents_web.extensions.agent_factory import create_cli_agent_with_context as create_cli_agent
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 from pydantic import ValidationError
@@ -109,21 +108,14 @@ class AgentService:
             # Perform final legacy capture before deletion
             try:
                 # We need to recreate the agent one last time for the summary
-                from deepagents_cli.agent import wrap_up_session
-                
+                from deepagents_web.extensions.wrap_up import wrap_up_session
+
                 # Manual instantiation inside delete_session
-                from deepagents_cli.agent import create_cli_agent
+                from deepagents_web.extensions.agent_factory import create_cli_agent_with_context as create_cli_agent
                 from deepagents_cli.config import create_model
-                from deepagents_cli.integrations.cua import load_cua_config
                 from deepagents_cli.sessions import get_checkpointer
-                
+
                 model = create_model()
-                cua_config = load_cua_config(
-                    model=self.cua_model,
-                    os_type=self.cua_os,
-                    provider_type=self.cua_provider,
-                    trajectory_dir=self.cua_trajectory_dir,
-                ) if self.enable_cua else None
 
                 async with get_checkpointer() as checkpointer:
                     agent, _backend = await create_cli_agent(
@@ -132,7 +124,6 @@ class AgentService:
                         auto_approve=True, # Force True for final wrap-up
                         enable_shell=True,
                         enable_cua=self.enable_cua,
-                        cua_config=cua_config,
                         checkpointer=checkpointer,
                     )
                     await wrap_up_session(
@@ -193,15 +184,6 @@ class AgentService:
             # Recreate agent instance for a request (Instant Instantiation)
             model = create_model()
 
-            cua_config: CuaConfig | None = None
-            if self.enable_cua:
-                cua_config = load_cua_config(
-                    model=self.cua_model,
-                    os_type=self.cua_os,
-                    provider_type=self.cua_provider,
-                    trajectory_dir=self.cua_trajectory_dir,
-                )
-
             # We need the checkpointer to maintain conversation history
             # IT MUST STAY OPEN while agent.astream is running
             from deepagents_cli.sessions import get_checkpointer
@@ -212,7 +194,6 @@ class AgentService:
                     auto_approve=session.session_state.auto_approve,
                     enable_shell=True,
                     enable_cua=self.enable_cua,
-                    cua_config=cua_config,
                     checkpointer=checkpointer,
                 )
 

@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING
 import yaml
 
 from deepagents_cli.config import Settings
-from deepagents_cli.skills.load import MAX_SKILL_NAME_LENGTH, list_skills
+from deepagents_cli.skills.load import list_skills
 
 from deepagents_web.models.recording import ActionType, RecordedAction
-from deepagents_web.models.skill import SkillResponse
+from deepagents_web.models.skill import MAX_SKILL_NAME_LENGTH, SkillResponse
 
 if TYPE_CHECKING:
     from deepagents_web.models.recording import RecordingSession
