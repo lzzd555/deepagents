@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from deepagents_web.main import app
+from deepagents_web.api import sessions as sessions_api
 
 
 @pytest.fixture
@@ -41,3 +42,23 @@ def test_list_sessions_endpoint(client):
     data = response.json()
     assert "sessions" in data
     assert isinstance(data["sessions"], list)
+
+
+def test_delete_session_endpoint_awaits_cleanup(client, monkeypatch):
+    """Deleting a session should await service cleanup so wrap-up can run."""
+
+    class FakeService:
+        def __init__(self) -> None:
+            self.deleted_ids: list[str] = []
+
+        async def delete_session(self, session_id: str) -> bool:
+            self.deleted_ids.append(session_id)
+            return True
+
+    service = FakeService()
+    monkeypatch.setattr(sessions_api, "get_agent_service", lambda: service)
+
+    response = client.delete("/api/sessions/session-123")
+
+    assert response.status_code == 204
+    assert service.deleted_ids == ["session-123"]

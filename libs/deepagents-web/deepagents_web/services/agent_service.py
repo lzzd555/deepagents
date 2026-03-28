@@ -37,11 +37,19 @@ class AgentSession:
         self,
         session_id: str,
         session_state: SessionState,
+        assistant_id: str,
     ) -> None:
         """Initialize the agent session."""
         self.session_id = session_id
         self.session_state = session_state
-        self.config = {"configurable": {"thread_id": session_state.thread_id}}
+        self.config = {
+            "configurable": {
+                "thread_id": session_state.thread_id,
+                # Keep a stable checkpoint namespace across per-turn agent
+                # re-instantiation so LangGraph can recover the same history.
+                "checkpoint_ns": f"web:{assistant_id}",
+            }
+        }
         self.pending_interrupts: dict[str, dict[str, Any]] = {}
         self.cancelled = False
 
@@ -85,6 +93,7 @@ class AgentService:
         self.sessions[session_id] = AgentSession(
             session_id=session_id,
             session_state=session_state,
+            assistant_id=self.agent_name,
         )
         return session_id
 
