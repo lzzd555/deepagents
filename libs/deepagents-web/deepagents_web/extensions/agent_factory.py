@@ -1,23 +1,19 @@
-"""Enhanced agent factory that adds context management on top of the official CLI agent."""
+"""Enhanced agent factory that uses deepagents.create_deep_agent."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from deepagents_cli.agent import create_cli_agent
-from deepagents_cli.config import settings
-from deepagents_web.extensions.context_utils import find_project_agent_md, find_project_root
+from deepagents import create_deep_agent
+from deepagents.backends import LocalShellBackend
+from deepagents.graph import BASE_AGENT_PROMPT
+
+from deepagents_web.extensions.context_utils import find_project_root
+from deepagents_web.extensions.settings import settings
 
 if TYPE_CHECKING:
     from langgraph.pregel import Pregel
-
-
-def _get_default_coding_instructions() -> str:
-    """Get default coding instructions from the CLI package."""
-    from deepagents_cli.config import get_default_coding_instructions
-
-    return get_default_coding_instructions()
 
 
 def _init_project_context() -> None:
@@ -55,49 +51,71 @@ async def create_cli_agent_with_context(
     cua_config: Any | None = None,
     **_kwargs: Any,
 ) -> tuple[Any, Any]:
-    """Create a CLI agent with enhanced context management.
+    """Create a deep agent with enhanced context management.
 
-    Wraps the official ``create_cli_agent`` with two additions:
+    Wraps ``deepagents.create_deep_agent`` with two additions:
 
     1. **CONTEXT.md auto-initialization** – creates a template when the file
        does not yet exist in the project's ``.deepagents/`` directory.
     2. **Multi-source memory loading** – feeds both AGENTS.md and CONTEXT.md
-       into the agent's MemoryMiddleware so the agent can see accumulated
-       project knowledge on every turn.
+       into the agent so it can see accumulated project knowledge on every turn.
 
     Accepts ``enable_cua`` and ``cua_config`` for backward compatibility with
-    callers that still pass these parameters, but silently ignores them since
-    CUA is not available in the PyPI distribution of ``deepagents-cli``.
+    callers that still pass these parameters, but silently ignores them.
+
+    Returns ``(agent, None)`` where *agent* is a ``CompiledStateGraph``.
+    The second element is ``None`` for backward compat with callers expecting
+    a ``(agent, backend)`` tuple from the old ``create_cli_agent`` API.
     """
     tools = tools or []
-
-    # ---- Unwrap ModelResult from the new create_model() API ----
-    # Official deepagents-cli >=0.0.34 returns ModelResult instead of BaseChatModel.
-    if hasattr(model, "model"):
-        model = model.model
 
     # ---- Ensure agent directory & AGENTS.md exist ----
     agent_dir = settings.ensure_agent_dir(assistant_id)
     agent_md = agent_dir / "AGENTS.md"
     if not agent_md.exists():
-        agent_md.write_text(_get_default_coding_instructions())
+        agent_md.write_text(BASE_AGENT_PROMPT)
 
     # ---- Auto-initialize project CONTEXT.md ----
     _init_project_context()
 
-    # ---- Delegate to the official create_cli_agent (sync in v0.0.34+) ----
-    agent, composite_backend = create_cli_agent(
+    # ---- Build memory sources (AGENTS.md + CONTEXT.md) ----
+    memory_sources: list[str] = [str(agent_md)]
+    project_root = find_project_root()
+    if project_root:
+        context_md = project_root / ".deepagents" / "CONTEXT.md"
+        if context_md.exists():
+            memory_sources.append(str(context_md))
+        project_agents_md = project_root / ".deepagents" / "AGENTS.md"
+        if project_agents_md.exists():
+            memory_sources.append(str(project_agents_md))
+
+    # ---- Build skill sources ----
+    skill_sources: list[str] = []
+    user_skills_dir = settings.get_user_skills_dir(assistant_id)
+    if user_skills_dir.exists():
+        skill_sources.append(str(user_skills_dir))
+    project_skills_dir = settings.get_project_skills_dir()
+    if project_skills_dir and project_skills_dir.exists():
+        skill_sources.append(str(project_skills_dir))
+
+    # ---- Build backend ----
+    if enable_shell:
+        backend: Any = LocalShellBackend()
+    else:
+        from deepagents.backends import FilesystemBackend
+
+        backend = FilesystemBackend(root_dir=str(Path.cwd()))
+
+    # ---- Create agent ----
+    agent = create_deep_agent(
         model=model,
-        assistant_id=assistant_id,
+        name=assistant_id,
         tools=tools,
-        sandbox=sandbox,
-        sandbox_type=sandbox_type,
         system_prompt=system_prompt,
-        auto_approve=auto_approve,
-        enable_memory=enable_memory,
-        enable_skills=enable_skills,
-        enable_shell=enable_shell,
+        memory=memory_sources if enable_memory else None,
+        skills=skill_sources if (enable_skills and skill_sources) else None,
         checkpointer=checkpointer,
+        backend=backend,
     )
 
-    return agent, composite_backend
+    return agent, None

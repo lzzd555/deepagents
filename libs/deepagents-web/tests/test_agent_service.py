@@ -61,7 +61,7 @@ async def test_stream_response_reuses_same_session_config_across_turns(monkeypat
 
     monkeypatch.setattr(agent_service_module, "create_model", lambda: object())
     monkeypatch.setattr(agent_service_module, "create_cli_agent", fake_create_cli_agent)
-    monkeypatch.setattr("deepagents_cli.sessions.get_checkpointer", fake_get_checkpointer)
+    monkeypatch.setattr("deepagents_web.extensions.sessions.get_checkpointer", fake_get_checkpointer)
 
     service = AgentService(agent_name="agent", enable_cua=False)
     session_id = await service.create_session()
@@ -119,7 +119,7 @@ async def test_stream_response_can_resume_history_with_recreated_agents(monkeypa
 
     monkeypatch.setattr(agent_service_module, "create_model", lambda: object())
     monkeypatch.setattr(agent_service_module, "create_cli_agent", fake_create_cli_agent)
-    monkeypatch.setattr("deepagents_cli.sessions.get_checkpointer", fake_get_checkpointer)
+    monkeypatch.setattr("deepagents_web.extensions.sessions.get_checkpointer", fake_get_checkpointer)
 
     service = AgentService(agent_name="agent", enable_cua=False)
     session_id = await service.create_session()

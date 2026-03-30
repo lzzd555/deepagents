@@ -8,8 +8,9 @@ import uuid
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
-from deepagents_cli.config import SessionState, create_model
 from deepagents_web.extensions.agent_factory import create_cli_agent_with_context as create_cli_agent
+from deepagents_web.extensions.models import create_model
+from deepagents_web.extensions.sessions import SessionState
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 from pydantic import ValidationError
@@ -112,8 +113,8 @@ class AgentService:
 
                 # Manual instantiation inside delete_session
                 from deepagents_web.extensions.agent_factory import create_cli_agent_with_context as create_cli_agent
-                from deepagents_cli.config import create_model
-                from deepagents_cli.sessions import get_checkpointer
+                from deepagents_web.extensions.models import create_model
+                from deepagents_web.extensions.sessions import get_checkpointer
 
                 model = create_model()
 
@@ -186,7 +187,7 @@ class AgentService:
 
             # We need the checkpointer to maintain conversation history
             # IT MUST STAY OPEN while agent.astream is running
-            from deepagents_cli.sessions import get_checkpointer
+            from deepagents_web.extensions.sessions import get_checkpointer
             async with get_checkpointer() as checkpointer:
                 agent, _backend = await create_cli_agent(
                     model=model,

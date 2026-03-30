@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from deepagents_cli.config import Settings
-from deepagents_cli.skills.load import list_skills
+from deepagents_web.extensions.settings import WebSettings
+from deepagents_web.extensions.skills import list_skills
 
 from deepagents_web.models.recording import ActionType, RecordedAction
 from deepagents_web.models.skill import MAX_SKILL_NAME_LENGTH, SkillResponse
@@ -25,7 +25,7 @@ class SkillService:
     def __init__(self, agent_name: str = "agent") -> None:
         """Initialize the skill service."""
         self.agent_name = agent_name
-        self.settings = Settings.from_environment()
+        self.settings = WebSettings.from_environment()
 
     def _truncate(self, text: str, max_len: int = 80) -> str:
         if len(text) <= max_len:
@@ -270,7 +270,7 @@ description: {description}
         """Create skill from natural language description using LLM."""
         self._validate_name(name)
 
-        from deepagents_cli.config import create_model
+        from deepagents_web.extensions.models import create_model
 
         prompt = f"""Generate a SKILL.md file for an agent skill with:
 
@@ -306,7 +306,7 @@ Output only the SKILL.md content, no explanation."""
         """Create skill from recorded browser actions using LLM."""
         self._validate_name(name)
 
-        from deepagents_cli.config import create_model
+        from deepagents_web.extensions.models import create_model
 
         # Convert recorded actions to description with robust selectors
         actions_desc = self._describe_recorded_actions(session.actions)
@@ -657,7 +657,7 @@ The script will:
         description: str = "",
     ) -> dict[str, str]:
         """Generate JavaScript to extract data from HTML using an LLM."""
-        from deepagents_cli.config import create_model
+        from deepagents_web.extensions.models import create_model
 
         prompt = f"""You are an expert at writing browser extraction JavaScript.
 
@@ -696,7 +696,7 @@ Output only JavaScript, no markdown."""
         description: str = "",
     ) -> dict[str, str]:
         """Generate JavaScript to fill form fields using an LLM."""
-        from deepagents_cli.config import create_model
+        from deepagents_web.extensions.models import create_model
 
         prompt = f"""You are an expert at writing browser form fill JavaScript.
 
@@ -731,7 +731,7 @@ Output only JavaScript, no markdown."""
 
     def ai_extract(self, content: str, prompt: str) -> str:
         """Use LLM to extract information from page content."""
-        from deepagents_cli.config import create_model
+        from deepagents_web.extensions.models import create_model
 
         full_prompt = f"""Extract information from the following web page content.
 
@@ -753,7 +753,7 @@ Respond with ONLY the extracted information, no explanations."""
 
     def ai_generate(self, prompt: str) -> str:
         """Use LLM to generate content for form filling."""
-        from deepagents_cli.config import create_model
+        from deepagents_web.extensions.models import create_model
 
         full_prompt = f"""Generate content based on the following request.
 

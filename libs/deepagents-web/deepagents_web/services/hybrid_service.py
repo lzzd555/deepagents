@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from deepagents_cli.config import Settings
+from deepagents_web.extensions.settings import WebSettings
 
 from deepagents_web.models.hybrid import (
     HybridSkillDefinition,
@@ -30,7 +30,7 @@ class HybridSkillService:
     def __init__(self, agent_name: str = "agent") -> None:
         """Initialize the hybrid skill service."""
         self.agent_name = agent_name
-        self.settings = Settings.from_environment()
+        self.settings = WebSettings.from_environment()
         self.skill_service = SkillService(agent_name=agent_name)
 
     def create_hybrid_skill(

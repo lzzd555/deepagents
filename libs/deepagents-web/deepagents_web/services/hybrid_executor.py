@@ -247,7 +247,7 @@ class HybridSkillExecutor:
         inputs: dict[str, Any],
     ) -> Any:
         """Execute a natural language step using LLM."""
-        from deepagents_cli.config import create_model
+        from deepagents_web.extensions.models import create_model
 
         # Build prompt with instructions and inputs
         prompt_parts = [step.instructions]
